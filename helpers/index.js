@@ -1,5 +1,4 @@
 const ShopifyAPI = require('shopify-node-api');
-const config = require('../config');
 const crypto = require('crypto');
 /**
  * A file full of helper functions that I found useful for building shopify apps.
@@ -13,8 +12,8 @@ module.exports = {
   openSession(shop) {
     return new ShopifyAPI({
       shop: shop.shopify_domain,
-      shopify_api_key: config.SHOPIFY_API_KEY,
-      shopify_shared_secret: config.SHOPIFY_SHARED_SECRET,
+      shopify_api_key: process.env.SHOPIFY_API_KEY,
+      shopify_shared_secret: process.env.SHOPIFY_SHARED_SECRET,
       access_token: shop.accessToken,
     });
   },
@@ -27,7 +26,12 @@ module.exports = {
    * @param {function} callback - A callback url for when the request is complete
    * @returns function or false if unsuccesful.
    */
-  buildWebhook(topic = '', address = `${config.APP_URI}/webhook/`, shop = {}, callback) {
+  buildWebhook(
+    topic = '',
+    address = `${process.env.APP_URI}/webhook/`,
+    shop = {},
+    callback
+  ) {
     if (topic.length === 0) {
       return false;
     } else if (address.length === 0) {
@@ -51,14 +55,19 @@ module.exports = {
         }
         return false;
       }
-      return typeof callback === 'function' ? callback(null, response, headers) : true;
+      return typeof callback === 'function'
+        ? callback(null, response, headers)
+        : true;
     });
-    return typeof callback === 'function' ? callback('Could not create webhook', null, null) : false;
+    return typeof callback === 'function'
+      ? callback('Could not create webhook', null, null)
+      : false;
   },
 
   generateNonce(bits = 64) {
     let text = '';
-    const possible = 'ABCDEFGHIJKLMOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
+    const possible =
+      'ABCDEFGHIJKLMOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
 
     for (let i = 0; i < bits; i += 1) {
       text += possible.charAt(Math.floor(Math.random() * bits));
@@ -73,8 +82,9 @@ module.exports = {
       return false;
     }
 
-    const sharedSecret = config.SHOPIFY_SHARED_SECRET;
-    const calculatedSignature = crypto.createHmac('sha256', sharedSecret)
+    const sharedSecret = process.env.SHOPIFY_SHARED_SECRET;
+    const calculatedSignature = crypto
+      .createHmac('sha256', sharedSecret)
       .update(Buffer.from(data), 'utf8')
       .digest('base64');
     return calculatedSignature === hmac;
@@ -85,10 +95,16 @@ module.exports = {
       return false;
     }
     const hmac = query.hmac;
-    const sharedSecret = config.SHOPIFY_SHARED_SECRET;
+    const sharedSecret = process.env.SHOPIFY_SHARED_SECRET;
     delete query.hmac;
-    const sortedQuery = Object.keys(query).map(key => `${key}=${Array(query[key]).join(',')}`).sort().join('&');
-    const calculatedSignature = crypto.createHmac('sha256', sharedSecret).update(sortedQuery).digest('hex');
+    const sortedQuery = Object.keys(query)
+      .map(key => `${key}=${Array(query[key]).join(',')}`)
+      .sort()
+      .join('&');
+    const calculatedSignature = crypto
+      .createHmac('sha256', sharedSecret)
+      .update(sortedQuery)
+      .digest('hex');
     if (calculatedSignature === hmac) {
       return true;
     }
@@ -96,5 +112,3 @@ module.exports = {
     return false;
   },
 };
-
-

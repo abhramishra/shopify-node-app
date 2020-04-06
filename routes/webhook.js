@@ -8,9 +8,20 @@ const verifyWebhook = require('../middleware').verifyWebhook;
 
 const router = express.Router();
 
-router.post('/', verifyWebhook, (req, res) => {
-  // This is where you should do something with your webhooks. Filter by Topic etc.
-  return res.sendStatus(200);
+router.post('/uninstall_shop', verifyWebhook, (req, res) => {
+  const domain = req.body.myshopify_domain;
+  const query = Shop.findOne({ shopify_domain: domain }).exec();
+  if (query) {
+    query.then(shop => {
+      shop.isActive = false;
+      shop.save().then(shopInActive => {
+        console.log(shopInActive);
+        res.sendStatus(200);
+      });
+    });
+  } else {
+    res.sendStatus(404);
+  }
 });
 
 module.exports = router;

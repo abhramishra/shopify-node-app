@@ -1,5 +1,4 @@
 const crypto = require('crypto');
-const config = require('../config');
 const verifyHmac = require('../helpers').verifyHmac;
 /**
  * Express middleware to verify hmac and requests from shopify.
@@ -17,7 +16,9 @@ function verifyWebhook(req, res, next) {
     hmac = req.get('X-Shopify-Hmac-SHA256');
     data = req.rawbody;
   } catch (e) {
-    console.log(`Webhook request failed from: ${req.get('X-Shopify-Shop-Domain')}`);
+    console.log(
+      `Webhook request failed from: ${req.get('X-Shopify-Shop-Domain')}`
+    );
     res.sendStatus(200);
   }
 
